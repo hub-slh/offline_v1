@@ -132,3 +132,171 @@ python gen_import_config.py -d dev_realtime_v1_lihao_song -t order_detail
 python gen_import_config.py -d dev_realtime_v1_lihao_song -t order_info
 python gen_import_config.py -d dev_realtime_v1_lihao_song -t sku_info
 python gen_import_config.py -d dev_realtime_v1_lihao_song -t user_info
+
+
+#3-25
+-- ods建表
+create table ods_order_info (
+   `id` string COMMENT '订单编号',
+   `total_amount` decimal(10,2) COMMENT '订单金额',
+   `order_status` string COMMENT '订单状态',
+  `user_id` string COMMENT '用户id' ,
+ `payment_way` string COMMENT '支付方式',
+ `out_trade_no` string COMMENT '支付流水号',
+ `create_time` string COMMENT '创建时间',
+ `operate_time` string COMMENT '操作时间'
+) COMMENT '订单表'
+PARTITIONED BY ( `dt` string)
+row format delimited  fields terminated by '\t'
+location '/user/hive/warehouse/dev_realtime_lihao_song/ods/ods_order_info/'
+tblproperties ("parquet.compression"="snappy");
+
+create table ods_order_detail(
+   `id` string COMMENT '订单编号',
+   `order_id` string  COMMENT '订单号',
+  `user_id` string COMMENT '用户id' ,
+ `sku_id` string COMMENT '商品id',
+ `sku_name` string COMMENT '商品名称',
+ `order_price` string COMMENT '下单价格',
+ `sku_num` string COMMENT '商品数量',
+ `create_time` string COMMENT '创建时间'
+) COMMENT '订单明细表'
+PARTITIONED BY ( `dt` string)
+row format delimited  fields terminated by '\t'
+location '/user/hive/warehouse/dev_realtime_lihao_song/ods/ods_order_detail/'
+tblproperties ("parquet.compression"="snappy");
+
+create table ods_sku_info(
+   `id` string COMMENT 'skuId',
+   `spu_id` string  COMMENT 'spuid',
+  `price` decimal(10,2) COMMENT '价格' ,
+ `sku_name` string COMMENT '商品名称',
+ `sku_desc` string COMMENT '商品描述',
+ `weight` string COMMENT '重量',
+ `tm_id` string COMMENT '品牌id',
+ `category3_id` string COMMENT '品类id',
+ `create_time` string COMMENT '创建时间'
+) COMMENT '商品表'
+PARTITIONED BY ( `dt` string)
+row format delimited  fields terminated by '\t'
+location '/user/hive/warehouse/dev_realtime_lihao_song/ods/ods_sku_info/'
+tblproperties ("parquet.compression"="snappy");
+
+create table ods_user_info(
+   `id` string COMMENT '用户id',
+   `name`  string COMMENT '姓名',
+  `birthday` string COMMENT '生日' ,
+ `gender` string COMMENT '性别',
+ `email` string COMMENT '邮箱',
+ `user_level` string COMMENT '用户等级',
+ `create_time` string COMMENT '创建时间'
+) COMMENT '用户信息'
+PARTITIONED BY ( `dt` string)
+row format delimited  fields terminated by '\t'
+location '/user/hive/warehouse/dev_realtime_lihao_song/ods/ods_user_info/'
+tblproperties ("parquet.compression"="snappy");
+--  ods数据导入
+load data inpath '/origin_data/db/order_info/2025-03-24'
+OVERWRITE into table ods_order_info partition(dt='2025-03-24');
+load data inpath '/origin_data/db/order_detail/2025-03-24'
+OVERWRITE into table ods_order_detail partition(dt='2025-03-24');
+load data inpath '/origin_data/db/sku_info/2025-03-24'
+OVERWRITE into table ods_sku_info partition(dt='2025-03-24');
+load data inpath '/origin_data/db/user_info/2025-03-24'
+OVERWRITE into table ods_user_info partition(dt='2025-03-24');
+-- dwd建表
+create external table dwd_order_info (
+  `id` string COMMENT '',
+   `total_amount` decimal(10,2) COMMENT '',
+   `order_status` string COMMENT ' 1 2  3  4  5',
+  `user_id` string COMMENT 'id' ,
+ `payment_way` string COMMENT '',
+ `out_trade_no` string COMMENT '',
+ `create_time` string COMMENT '',
+ `operate_time` string COMMENT ''
+) COMMENT ''
+PARTITIONED BY ( `dt` string)
+stored as  parquet
+location '/user/hive/warehouse/dev_realtime_lihao_song/dwd/dwd_order_info/'
+tblproperties ("parquet.compression"="snappy");
+
+create external table dwd_order_detail(
+   `id` string COMMENT '',
+   `order_id` decimal(10,2) COMMENT '',
+  `user_id` string COMMENT 'id' ,
+ `sku_id` string COMMENT 'id',
+ `sku_name` string COMMENT '',
+ `order_price` string COMMENT '',
+ `sku_num` string COMMENT '',
+ `create_time` string COMMENT ''
+) COMMENT ''
+PARTITIONED BY ( `dt` string)
+stored as  parquet
+location '/user/hive/warehouse/dev_realtime_lihao_song/dwd/dwd_order_detail/'
+tblproperties ("parquet.compression"="snappy");
+
+create external table dwd_user_info(
+   `id` string COMMENT 'id',
+   `name`  string COMMENT '',
+  `birthday` string COMMENT '' ,
+ `gender` string COMMENT '',
+ `email` string COMMENT '',
+ `user_level` string COMMENT '',
+ `create_time` string COMMENT ''
+) COMMENT ''
+PARTITIONED BY ( `dt` string)
+stored as  parquet
+location '/user/hive/warehouse/dev_realtime_lihao_song/dwd/dwd_user_info/'
+tblproperties ("parquet.compression"="snappy");
+
+create table dwd_sku_info(
+   `id` string COMMENT 'skuId',
+   `spu_id` string  COMMENT 'spuid',
+  `price` decimal(10,2) COMMENT '价格' ,
+ `sku_name` string COMMENT '商品名称',
+ `sku_desc` string COMMENT '商品描述',
+ `weight` string COMMENT '重量',
+ `tm_id` string COMMENT '品牌id',
+ `category3_id` string COMMENT '品类id',
+ `create_time` string COMMENT '创建时间'
+) COMMENT '商品表'
+PARTITIONED BY ( `dt` string)
+row format delimited  fields terminated by '\t'
+location '/user/hive/warehouse/dev_realtime_lihao_song/dwd/dwd_sku_info/'
+tblproperties ("parquet.compression"="snappy");
+-- dwd数据
+set hive.exec.dynamic.partition.mode=nonstrict;
+insert  overwrite table   dwd_order_info partition(dt )
+select  * from ods_order_info
+where dt='2025-03-24'  and id is not null;
+insert  overwrite table   dwd_order_detail partition(dt )
+select  * from ods_order_detail
+where dt='2025-03-24'  and id is not null;
+insert  overwrite table   dwd_sku_info partition(dt )
+select  * from ods_sku_info
+where dt='2025-03-24'  and id is not null;
+insert  overwrite table   dwd_user_info partition(dt )
+select  * from ods_user_info
+where dt='2025-03-24'  and id is not null;
+
+
+drop table dws_sale_detail;
+-- dws
+create table  dws_sale_detail
+(  user_id  string  comment '用户 id',
+ sku_id  string comment '商品 Id',
+ user_gender  string comment '用户性别',
+ user_age string  comment '用户年龄',
+ user_level string comment '用户等级',
+ order_price decimal(10,2) comment '订单价格',
+ sku_name string  comment '商品名称',
+ sku_tm_id string  comment '品牌id',
+ spu_id  string comment '商品 spu',
+ sku_num  int comment '购买个数',
+ order_count string comment '当日下单单数',
+ order_amount string comment '当日下单金额'
+) COMMENT '用户购买商品明细表'
+PARTITIONED BY ( `dt` string)
+stored as  parquet
+location '/user/hive/warehouse/dev_realtime_lihao_song/dws/dws_sale_detail/'
+tblproperties ("parquet.compression"="snappy");
