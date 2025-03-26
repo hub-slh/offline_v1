@@ -300,3 +300,74 @@ PARTITIONED BY ( `dt` string)
 stored as  parquet
 location '/user/hive/warehouse/dev_realtime_lihao_song/dws/dws_sale_detail/'
 tblproperties ("parquet.compression"="snappy");
+
+
+#0326
+with
+tmp_detail as
+(
+    select
+        user_id,
+        sku_id,
+        sum(sku_num) sku_num ,
+        count(*) order_count ,
+        sum(od.order_price*sku_num)  order_amount
+    from ods_order_detail od
+    where od.dt='2025-03-25' and user_id is not null
+    group by user_id, sku_id
+)
+insert overwrite table  dws_sale_detail partition(dt='2025-03-25')
+select
+    tmp_detail.user_id,
+    tmp_detail.sku_id,
+    u.gender,
+    months_between('2025-03-25', u.birthday)/12  age,
+    u.user_level,
+    price,
+    sku_name,
+    tm_id,
+    spu_id,
+    tmp_detail.sku_num,
+    tmp_detail.order_count,
+    tmp_detail.order_amount
+from tmp_detail
+left join dwd_user_info u on u.id=tmp_detail.user_id  and u.dt='2025-03-25'
+left join dwd_sku_info s on tmp_detail.sku_id =s.id  and s.dt='2025-03-25';
+
+-- ads
+drop  table ads_goods_purchase_rate;
+create  table ads_goods_purchase_rate(
+sku_id string,
+sku_name string,
+buycount bigint,
+buy_twice_last bigint,
+buy_twice_last_ratio decimal(10,2),
+buy_3times_last bigint,
+buy_3times_last_ratio decimal(10,2),
+stat_mn string,
+stat_date string
+)
+row format delimited  fields terminated by '\t'
+location '/user/hive/warehouse/dev_realtime_lihao_song/ads/ads_goods_purchase_rate';
+set hive.exec.dynamic.partition.mode=nonstrict;
+insert overwrite table ads_goods_purchase_rate
+select
+sku_id,
+sku_name,
+sum(if(order_count>=1,1,0)) buycount,
+sum(if(order_count>=2,1,0)) buy_twice_count,
+sum(if(order_count>=2,1,0))/sum(if(order_count>=1,1,0)) buy_twice_rate,
+sum(if(order_count>3,1,0)) buy_repeatedly_count,
+sum(if(order_count>3,1,0))/sum(if(order_count>=1,1,0)) buy_repeatedly_rate,
+date_format('2025-03-15','yyyy-MM') stat_mn,
+date_format('2025-03-15','yyyy-MM-dd') stat_date
+from
+(select
+user_id,
+sku_id,
+sku_name,
+count(1) order_count,
+sum(order_price*sku_num)
+from dws_sale_detail
+group by user_id,sku_id,sku_name) a
+group by sku_id,sku_name;
